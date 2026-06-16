@@ -1,0 +1,15 @@
+# Исключения для Python / Django (Бэкенд)
+**/venv/
+**/*.pyc
+**/__pycache__/
+**/db.sqlite3
+
+# Исключения для Node.js / React (Фронтенд)
+**/node_modules/
+**/dist/
+**/.env
+
+# Системные файлы и настройки IDE
+.vscode/
+.idea/
+.DS_Store
