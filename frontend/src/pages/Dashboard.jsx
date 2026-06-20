@@ -3,27 +3,6 @@ import { Link } from 'react-router-dom';
 import API from '../api';
 
 export default function Dashboard() {
-  const getTodayDateString = () => {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const getMaxDateString = () => {
-  const today = new Date();
-  const yyyy = today.getFullYear() + 10;
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  // Корректировка для високосного 29 февраля
-  if (mm === '02' && dd === '29') {
-    const isLeap = (yyyy % 4 === 0 && yyyy % 100 !== 0) || (yyyy % 400 === 0);
-    if (!isLeap) return `${yyyy}-02-28`;
-  }
-  return `${yyyy}-${mm}-${dd}`;
-  };
-  
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [tags, setTags] = useState([]);
@@ -73,13 +52,12 @@ export default function Dashboard() {
     }
   };
 
-  // Функция "Закрыть задачу" (пометка статусом done)
   const handleCloseTask = async (id, e) => {
     e.preventDefault();
     e.stopPropagation();
     try {
       await API.patch(`tasks/${id}/`, { status: 'done' });
-      fetchData(); // Обновляем списки
+      fetchData();
     } catch (err) {
       setError('Не удалось закрыть задачу.');
     }
@@ -157,6 +135,10 @@ export default function Dashboard() {
     );
   }
 
+  // Разделение задач на две группы
+  const activeTasks = tasks.filter(t => t.status !== 'done');
+  const completedTasks = tasks.filter(t => t.status === 'done');
+
   return (
     <div>
       <h1>Мой Дашборд</h1>
@@ -203,7 +185,7 @@ export default function Dashboard() {
                             borderBottom: '1px solid #e5e7eb',
                             cursor: 'pointer',
                             backgroundColor: isSelected ? '#eff6ff' : 'transparent',
-                            color: isSelected ? '#111827' : 'inherit', // Цвет текста при включенной темной теме меняется на темный
+                            color: isSelected ? '#111827' : 'inherit',
                             transition: 'background-color 0.2s, color 0.2s'
                           }}
                         >
@@ -250,7 +232,6 @@ export default function Dashboard() {
               <input type="date" value={dueDate} min={getTodayDateString()} max={getMaxDateString()} onChange={(e) => setDueDate(e.target.value)} />
 
               <label>Статус:</label>
-              {/* Статус 'done' (Готово) удален из выбора */}
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="todo">К выполнению</option>
                 <option value="in_progress">В процессе</option>
@@ -262,15 +243,14 @@ export default function Dashboard() {
         </div>
 
         <div style={{ flex: 2 }}>
-          <h3>Все задачи</h3>
-          {tasks.length === 0 ? (
-            <p>Задач пока нет. Добавьте первую задачу слева.</p>
+          {/* Секция активных задач */}
+          <h3>Активные задачи</h3>
+          {activeTasks.length === 0 ? (
+            <p>Активных задач пока нет. Добавьте первую задачу слева.</p>
           ) : (
             <div className="tasks-grid">
-              {tasks.map(task => (
+              {activeTasks.map(task => (
                 <div key={task.id} className="card" style={{ margin: 0, borderLeft: '5px solid #3b82f6', position: 'relative' }}>
-                  
-                  {/* Кнопка "Удалить" */}
                   <button 
                     onClick={(e) => handleDeleteTask(task.id, e)}
                     style={{ 
@@ -285,22 +265,19 @@ export default function Dashboard() {
                     Удалить
                   </button>
 
-                  {/* Кнопка "Закрыть задачу" (отображается только если статус не равен 'done') */}
-                  {task.status !== 'done' && (
-                    <button 
-                      onClick={(e) => handleCloseTask(task.id, e)}
-                      style={{ 
-                        position: 'absolute', 
-                        top: '10px', 
-                        right: '80px', 
-                        backgroundColor: '#10b981', 
-                        padding: '4px 8px', 
-                        fontSize: '11px' 
-                      }}
-                    >
-                      Закрыть
-                    </button>
-                  )}
+                  <button 
+                    onClick={(e) => handleCloseTask(task.id, e)}
+                    style={{ 
+                      position: 'absolute', 
+                      top: '10px', 
+                      right: '80px', 
+                      backgroundColor: '#10b981', 
+                      padding: '4px 8px', 
+                      fontSize: '11px' 
+                    }}
+                  >
+                    Закрыть
+                  </button>
 
                   <Link to={`/task/${task.id}`} state={{ from: '/dashboard' }} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <h4 style={{ margin: '0 0 10px 0', paddingRight: '140px' }}>{task.title}</h4>
@@ -314,10 +291,52 @@ export default function Dashboard() {
                       ))}
                     </div>
                   </Link>
-
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Секция выполненных задач в выпадающем списке */}
+          {completedTasks.length > 0 && (
+            <details style={{ marginTop: '30px' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 'bold', padding: '12px', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '6px', outline: 'none' }}>
+                Выполненные задачи ({completedTasks.length})
+              </summary>
+              <div className="tasks-grid" style={{ marginTop: '15px' }}>
+                {completedTasks.map(task => (
+                  <div key={task.id} className="card" style={{ margin: 0, borderLeft: '5px solid #10b981', position: 'relative' }}>
+                    <button 
+                      onClick={(e) => handleDeleteTask(task.id, e)}
+                      style={{ 
+                        position: 'absolute', 
+                        top: '10px', 
+                        right: '10px', 
+                        backgroundColor: '#ef4444', 
+                        padding: '4px 8px', 
+                        fontSize: '11px' 
+                      }}
+                    >
+                      Удалить
+                    </button>
+
+                    <Link to={`/task/${task.id}`} state={{ from: '/dashboard' }} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <h4 style={{ margin: '0 0 10px 0', paddingRight: '80px', textDecoration: 'line-through', color: '#6b7280' }}>
+                        {task.title}
+                      </h4>
+                      <p style={{ margin: '5px 0' }}>Статус: <strong>Готово</strong></p>
+                      {task.due_date && <p style={{ fontSize: '13px', color: '#dc2626', margin: '5px 0' }}>Срок: {task.due_date}</p>}
+                      <p style={{ fontSize: '13px', color: '#6b7280', margin: '5px 0' }}>Проект: {task.project_name || 'Без проекта'}</p>
+                      
+                      <div style={{ marginTop: '10px' }}>
+                        {task.tags && task.tags.map(tag => (
+                          <span key={tag.id} className="tag-badge">#{tag.name}</span>
+                        ))}
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </details>
           )}
         </div>
 
@@ -325,3 +344,23 @@ export default function Dashboard() {
     </div>
   );
 }
+
+const getTodayDateString = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const getMaxDateString = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear() + 10;
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  if (mm === '02' && dd === '29') {
+    const isLeap = (yyyy % 4 === 0 && yyyy % 100 !== 0) || (yyyy % 400 === 0);
+    if (!isLeap) return `${yyyy}-02-28`;
+  }
+  return `${yyyy}-${mm}-${dd}`;
+};

@@ -17,7 +17,7 @@ body {
   color: #f3f4f6;
 }
 
-/* ФИКСИРОВАННЫЙ SIDEBAR СЛЕВА */
+/* ФИКСИРОВАННЫЙ SIDEBAR СЛЕВА (ДЕСКТОП) */
 .sidebar {
   width: 240px;
   background-color: #1f2937;
@@ -75,13 +75,25 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-input, select, textarea {
+input, select {
   width: 100%;
   padding: 10px;
   margin: 8px 0 16px 0;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   box-sizing: border-box;
+}
+
+/* ФИКСИРОВАННЫЙ РАЗМЕР ПОЛЯ ОПИСАНИЯ ДЛЯ ВСЕХ ВАРИАНТОВ */
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0 16px 0;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-sizing: border-box;
+  resize: none; /* Запрещает растягивание */
+  height: 100px; /* Фиксированная высота во всех формах */
 }
 
 /* Поля ввода в темной теме */
@@ -140,7 +152,7 @@ button:hover {
   color: #f3f4f6;
 }
 
-/* КЛАССЫ КАЛЕНДАРЯ */
+/* КЛАССЫ КАЛЕНДАРЯ (ДЕСКТОП) */
 .calendar-top-bar {
   display: flex;
   justify-content: space-between;
@@ -179,6 +191,8 @@ button:hover {
   justify-content: space-between;
   transition: background-color 0.2s, border-color 0.2s;
   background-color: #ffffff;
+  overflow: hidden; /* Защита от вертикального выхода за рамки */
+  box-sizing: border-box;
 }
 
 .app-container.dark .calendar-cell {
@@ -218,6 +232,7 @@ button:hover {
   flex-direction: column;
   gap: 3px;
   margin-top: 4px;
+  width: 100%;
 }
 
 .task-badge-compact {
@@ -227,11 +242,13 @@ button:hover {
   border-radius: 4px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: ellipsis; /* Защита от горизонтального выхода за рамки */
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .task-badge-compact.todo {
@@ -264,42 +281,148 @@ button:hover {
   gap: 15px;
 }
 
-/* Адаптивная верстка */
+/* АДАПТИВНАЯ ВЕРСТКА ДЛЯ МОБИЛЬНЫХ (ШИРИНА ЭКРАНА < 768px) */
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
   }
+
+  /* ГОРИЗОНТАЛЬНЫЙ SIDEBAR В МОБИЛЬНОЙ ВЕРСТКЕ */
   .sidebar {
     position: relative;
     width: 100%;
+    height: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    box-sizing: border-box;
   }
+  .sidebar > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar h2 {
+    margin: 0;
+    text-align: center;
+  }
+  .sidebar nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .sidebar nav a {
+    margin-bottom: 0;
+    padding: 8px 6px;
+    font-size: 13px;
+    flex: 1;
+    text-align: center;
+  }
+  .sidebar button {
+    width: 100% !important;
+    max-width: 350px;
+    margin-top: 5px !important;
+  }
+
   .main-content {
     margin-left: 0;
     padding: 15px;
   }
+
+  /* ПРИНУДИТЕЛЬНЫЙ ВЕРТИКАЛЬНЫЙ СТЕК ДЛЯ ГИБКИХ КОНТЕЙНЕРОВ (ДОБАВЛЕНО) */
   .flex-container {
     flex-direction: column !important;
+    gap: 15px !important;
   }
-  /* СЕТКА ПЕРЕСТРАИВАЕТСЯ В ОДНУ КОЛОНКУ НА МОБИЛЬНЫХ */
+  
   .tasks-grid {
     grid-template-columns: 1fr !important;
   }
+
+  /* ПЕРЕРАБОТКА КАЛЕНДАРЯ В МОБИЛЬНОЙ ВЕРСТКЕ */
   .calendar-grid {
-    gap: 2px;
-  }
-  .calendar-cell {
-    min-height: 60px;
-    padding: 3px;
+    gap: 0;
   }
   .calendar-header-cell {
-    font-size: 11px;
-    padding: 4px;
+    background-color: transparent !important;
+    border: none;
+    font-size: 12px;
+    text-transform: lowercase;
+    color: #9ca3af;
+    padding: 8px 0;
+  }
+  .calendar-cell {
+    border: none !important;
+    border-bottom: 1px solid #d1d5db !important;
+    border-radius: 0 !important;
+    
+    /* ДИНАМИЧЕСКИЙ РАСЧЕТ РАЗМЕРА НА ОСНОВЕ ШИРИНЫ ЭКРАНА */
+    min-height: auto !important;
+    aspect-ratio: 1 / 1.15 !important;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 6px 2px !important;
+    box-sizing: border-box;
+    background-color: transparent !important;
+    
+    /* Защита от вертикального выхода за рамки в мобильной верстке */
+    overflow: hidden !important; 
+  }
+  .app-container.dark .calendar-cell {
+    border-bottom-color: #374151 !important;
+  }
+  .calendar-cell.inactive {
+    opacity: 0.2;
+  }
+  
+  /* Круглое выделение для выбранного дня */
+  .calendar-cell.selected .calendar-cell-num {
+    background-color: #ef4444;
+    color: #ffffff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .calendar-cell.selected {
+    background-color: transparent !important;
+  }
+
+  .calendar-badges {
+    width: 100%;
+    align-items: center;
   }
   .task-badge-compact {
-    font-size: 8px;
-    padding: 1px 2px;
+    font-size: 8px !important;
+    padding: 1px 3px !important;
+    max-width: 90%;
+    
+    /* Дополнительное усечение для сверхмалых экранов */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
-  .calendar-cell-num {
-    font-size: 10px;
+
+  /* УМЕНЬШЕНИЕ РАЗМЕРА ТЕКСТА "МЕСЯЦ ГОД" В МОБИЛЬНОМ КАЛЕНДАРЕ */
+  .calendar-top-bar h2 {
+    font-size: 16px !important;
+  }
+
+  /* УМЕНЬШЕНИЕ РАЗМЕРА КНОПОК ПЕРЕКЛЮЧЕНИЯ МЕСЯЦЕВ НА МОБИЛЬНЫХ */
+  .calendar-top-bar button {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
   }
 }

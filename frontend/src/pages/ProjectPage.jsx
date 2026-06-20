@@ -3,26 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import API from '../api';
 
 export default function ProjectPage() {
-  const getTodayDateString = () => {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const getMaxDateString = () => {
-  const today = new Date();
-  const yyyy = today.getFullYear() + 10;
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  if (mm === '02' && dd === '29') {
-    const isLeap = (yyyy % 4 === 0 && yyyy % 100 !== 0) || (yyyy % 400 === 0);
-    if (!isLeap) return `${yyyy}-02-28`;
-  }
-  return `${yyyy}-${mm}-${dd}`;
-  };
-  
   const location = useLocation();
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
@@ -30,23 +10,19 @@ export default function ProjectPage() {
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
 
-  // Состояния для персонального дашборда проекта
   const [selectedProject, setSelectedProject] = useState(null);
   const [projectTasks, setProjectTasks] = useState([]);
   const [tags, setTags] = useState([]);
 
-  // Состояния редактирования проекта
   const [isEditingProject, setIsEditingProject] = useState(false);
   const [editProjName, setEditProjName] = useState('');
   const [editProjDesc, setEditProjDesc] = useState('');
 
-  // Состояния формы добавления задачи внутри проекта
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
   const [taskStatus, setTaskStatus] = useState('todo');
   const [taskDueDate, setTaskDueDate] = useState('');
   
-  // Состояния интерактивного виджета тегов
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const [newTagName, setNewTagName] = useState('');
 
@@ -112,7 +88,6 @@ export default function ProjectPage() {
     }
   };
 
-  // Редактирование проекта
   const handleUpdateProject = async (e) => {
     e.preventDefault();
     try {
@@ -120,9 +95,9 @@ export default function ProjectPage() {
         name: editProjName,
         description: editProjDesc
       });
-      setSelectedProject(response.data); // Обновляем текущие данные дашборда проекта
+      setSelectedProject(response.data);
       setIsEditingProject(false);
-      fetchProjects(); // Обновляем список проектов
+      fetchProjects();
     } catch (err) {
       setError('Не удалось обновить проект.');
     }
@@ -217,7 +192,6 @@ export default function ProjectPage() {
     }
   };
 
-  // Функция "Закрыть задачу" внутри проекта
   const handleCloseTaskInProject = async (taskId, e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -243,13 +217,15 @@ export default function ProjectPage() {
     );
   }
 
+  // Разделение задач проекта на активные и выполненные
+  const activeTasks = projectTasks.filter(t => t.status !== 'done');
+  const completedTasks = projectTasks.filter(t => t.status === 'done');
+
   if (selectedProject) {
     return (
       <div>
-        {/* Хедер дашборда проекта (поддерживает редактирование) */}
         <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
           {isEditingProject ? (
-            // Режим редактирования проекта
             <form onSubmit={handleUpdateProject} style={{ flex: 1, marginRight: '20px' }}>
               <label>Название проекта:</label>
               <input type="text" value={editProjName} onChange={(e) => setEditProjName(e.target.value)} required />
@@ -261,7 +237,6 @@ export default function ProjectPage() {
               </div>
             </form>
           ) : (
-            // Обычный режим просмотра хедера
             <div>
               <span style={{ fontSize: '14px', color: '#3b82f6', fontWeight: 'bold' }}>ПЕРСОНАЛЬНЫЙ ДАШБОРД</span>
               <h1 style={{ margin: '5px 0 0 0' }}>Проект: {selectedProject.name}</h1>
@@ -271,7 +246,6 @@ export default function ProjectPage() {
           
           {!isEditingProject && (
             <div style={{ display: 'flex', gap: '10px' }}>
-              {/* Кнопка "Редактировать проект" */}
               <button onClick={() => setIsEditingProject(true)} style={{ backgroundColor: '#3b82f6' }}>
                 Редактировать проект
               </button>
@@ -317,12 +291,12 @@ export default function ProjectPage() {
                               borderBottom: '1px solid #e5e7eb',
                               cursor: 'pointer',
                               backgroundColor: isSelected ? '#eff6ff' : 'transparent',
-                              color: isSelected ? '#111827' : 'inherit', // Изменение цвета текста на темный в темной теме
+                              color: isSelected ? '#111827' : 'inherit',
                               transition: 'background-color 0.2s, color 0.2s'
                             }}
                           >
                             <span style={{ fontSize: '14px', fontWeight: isSelected ? '600' : 'normal' }}>
-                              {isSelected ? 'v ' : ''}#{t.name}
+                              {isSelected ? '✓ ' : ''}#{t.name}
                             </span>
                             <button 
                               type="button"
@@ -364,7 +338,6 @@ export default function ProjectPage() {
                 <input type="date" value={taskDueDate} min={getTodayDateString()} max={getMaxDateString()} onChange={(e) => setTaskDueDate(e.target.value)} />
 
                 <label>Статус:</label>
-                {/* Статус 'done' (Готово) удален из выбора */}
                 <select value={taskStatus} onChange={(e) => setTaskStatus(e.target.value)}>
                   <option value="todo">К выполнению</option>
                   <option value="in_progress">В процессе</option>
@@ -376,14 +349,14 @@ export default function ProjectPage() {
           </div>
 
           <div style={{ flex: 2 }}>
-            <h3>Задачи проекта ({projectTasks.length})</h3>
-            {projectTasks.length === 0 ? (
-              <p>В этом проекте пока нет задач. Добавьте первую задачу слева.</p>
+            {/* Активные задачи проекта */}
+            <h3>Активные задачи проекта ({activeTasks.length})</h3>
+            {activeTasks.length === 0 ? (
+              <p>В этом проекте пока нет активных задач. Добавьте первую задачу слева.</p>
             ) : (
               <div className="tasks-grid">
-                {projectTasks.map(task => (
+                {activeTasks.map(task => (
                   <div key={task.id} className="card" style={{ margin: 0, borderLeft: '5px solid #10b981', position: 'relative' }}>
-                    
                     <button 
                       onClick={(e) => handleDeleteTaskInProject(task.id, e)}
                       style={{ 
@@ -398,7 +371,6 @@ export default function ProjectPage() {
                       Удалить
                     </button>
 
-                    {/* Кнопка "Закрыть задачу" */}
                     {task.status !== 'done' && (
                       <button 
                         onClick={(e) => handleCloseTaskInProject(task.id, e)}
@@ -430,10 +402,55 @@ export default function ProjectPage() {
                         ))}
                       </div>
                     </Link>
-
                   </div>
                 ))}
               </div>
+            )}
+
+            {/* Выполненные задачи проекта в выпадающем списке */}
+            {completedTasks.length > 0 && (
+              <details style={{ marginTop: '30px' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 'bold', padding: '12px', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '6px', outline: 'none' }}>
+                  Выполненные задачи проекта ({completedTasks.length})
+                </summary>
+                <div className="tasks-grid" style={{ marginTop: '15px' }}>
+                  {completedTasks.map(task => (
+                    <div key={task.id} className="card" style={{ margin: 0, borderLeft: '5px solid #10b981', position: 'relative' }}>
+                      <button 
+                        onClick={(e) => handleDeleteTaskInProject(task.id, e)}
+                        style={{ 
+                          position: 'absolute', 
+                          top: '10px', 
+                          right: '10px', 
+                          backgroundColor: '#ef4444', 
+                          padding: '4px 8px', 
+                          fontSize: '11px' 
+                        }}
+                      >
+                        Удалить
+                      </button>
+
+                      <Link 
+                        to={`/task/${task.id}`} 
+                        state={{ from: '/projects', project: selectedProject }} 
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
+                        <h4 style={{ margin: '0 0 10px 0', paddingRight: '80px', textDecoration: 'line-through', color: '#6b7280' }}>
+                          {task.title}
+                        </h4>
+                        <p style={{ margin: '5px 0' }}>Статус: <strong>Готово</strong></p>
+                        {task.due_date && <p style={{ fontSize: '12px', color: '#dc2626', margin: '5px 0' }}>Срок: {task.due_date}</p>}
+                        
+                        <div style={{ marginTop: '10px' }}>
+                          {task.tags && task.tags.map(tag => (
+                            <span key={tag.id} className="tag-badge">#{tag.name}</span>
+                          ))}
+                        </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </details>
             )}
           </div>
 
@@ -501,3 +518,23 @@ export default function ProjectPage() {
     </div>
   );
 }
+
+const getTodayDateString = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const getMaxDateString = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear() + 10;
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  if (mm === '02' && dd === '29') {
+    const isLeap = (yyyy % 4 === 0 && yyyy % 100 !== 0) || (yyyy % 400 === 0);
+    if (!isLeap) return `${yyyy}-02-28`;
+  }
+  return `${yyyy}-${mm}-${dd}`;
+};

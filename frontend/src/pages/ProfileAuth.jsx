@@ -9,15 +9,23 @@ export default function ProfileAuth() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   
-  // Состояния сессии
   const [userToken, setUserToken] = useState(localStorage.getItem('token'));
   const [currentUsername, setCurrentUsername] = useState(localStorage.getItem('username'));
 
-  // Состояния для статистики и дедлайнов в профиле
+  const fetchData = async () => {
+    try {
+      const tasksRes = await API.get('tasks/');
+      const projectsRes = await API.get('projects/');
+      setTasks(tasksRes.data);
+      setProjects(projectsRes.data);
+    } catch (err) {
+      setError('Не удалось загрузить данные статистики профиля.');
+    }
+  };
+
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
 
-  // Запрос статистики при авторизации
   useEffect(() => {
     if (userToken) {
       Promise.all([
@@ -84,33 +92,36 @@ export default function ProfileAuth() {
     setProjects([]);
   };
 
-  // ЭКРАН 👤 Мой Профиль (со статистикой и разделенными дедлайнами)
   if (userToken) {
-    // Вычисление статистики
     const currentTasksCount = tasks.filter(t => t.status !== 'done').length;
     const projectsCount = projects.length;
 
-    // Вычисление текущей даты на клиенте в формате YYYY-MM-DD
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     const todayStr = `${yyyy}-${mm}-${dd}`;
 
-    // Фильтрация невыполненных задач с дедлайнами
+    // Вычисление даты ровно на 7 дней вперед
+    const maxUpcoming = new Date();
+    maxUpcoming.setDate(today.getDate() + 7);
+    const max_yyyy = maxUpcoming.getFullYear();
+    const max_mm = String(maxUpcoming.getMonth() + 1).padStart(2, '0');
+    const max_dd = String(maxUpcoming.getDate()).padStart(2, '0');
+    const maxUpcomingStr = `${max_yyyy}-${max_mm}-${max_dd}`;
+
     const activeTasksWithDeadlines = tasks.filter(t => t.status !== 'done' && t.due_date);
 
-    // 1. Просроченные дедлайны (дедлайн строго меньше сегодняшней даты)
     const overdueTasks = activeTasksWithDeadlines
       .filter(t => t.due_date < todayStr)
       .sort((a, b) => a.due_date.localeCompare(b.due_date))
-      .slice(0, 3); // Показываем максимум 3 просроченные задачи
+      .slice(0, 3);
 
-    // 2. Ближайшие дедлайны (дедлайн сегодня или в будущем)
+    // Ограничение выборки: дедлайн должен быть в пределах от сегодняшнего дня до +7 дней
     const upcomingTasks = activeTasksWithDeadlines
-      .filter(t => t.due_date >= todayStr)
+      .filter(t => t.due_date >= todayStr && t.due_date <= maxUpcomingStr)
       .sort((a, b) => a.due_date.localeCompare(b.due_date))
-      .slice(0, 3); // Показываем максимум 3 ближайшие задачи
+      .slice(0, 3);
 
     return (
       <div style={{ maxWidth: '600px', margin: '20px auto' }}>
@@ -118,16 +129,15 @@ export default function ProfileAuth() {
           <h2>Мой Профиль</h2>
           <p>Вы вошли как: <strong>{currentUsername}</strong></p>
           
-          <hr style={{ borderColor: '#e5e7eb', margin: '20px 0' }} />
+          <hr style={{ borderColor: '#e5e7eb', margin: '15px 0' }} />
           
-          {/* Блок статистики */}
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'space-around', margin: '20px 0' }} className="flex-container">
-            <div className="card" style={{ flex: 1, margin: 0, backgroundColor: 'rgba(59, 130, 246, 0.05)' }}>
-              <h4 style={{ margin: '0 0 10px 0' }}>Текущие задачи</h4>
+            <div className="card" style={{ flex: 1, margin: 0, backgroundColor: 'rgba(16, 185, 129, 0.05)' }}>
+              <h4>Текущие задачи</h4>
               <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#3b82f6' }}>{currentTasksCount}</span>
             </div>
             <div className="card" style={{ flex: 1, margin: 0, backgroundColor: 'rgba(16, 185, 129, 0.05)' }}>
-              <h4 style={{ margin: '0 0 10px 0' }}>Мои проекты</h4>
+              <h4>Мои проекты</h4>
               <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>{projectsCount}</span>
             </div>
           </div>
@@ -137,7 +147,6 @@ export default function ProfileAuth() {
           </button>
         </div>
 
-        {/* Блок 1: Просроченные дедлайны*/}
         <div className="card" style={{ marginTop: '20px' }}>
           <h3>Просроченные дедлайны</h3>
           {overdueTasks.length === 0 ? (
@@ -159,11 +168,10 @@ export default function ProfileAuth() {
           )}
         </div>
 
-        {/* Блок 2: Ближайшие дедлайны */}
         <div className="card" style={{ marginTop: '20px' }}>
-          <h3>Ближайшие дедлайны</h3>
+          <h3>Ближайшие дедлайны (на 7 дней вперед)</h3>
           {upcomingTasks.length === 0 ? (
-            <p style={{ color: '#6b7280' }}>Нет текущих задач с дедлайнами.</p>
+            <p style={{ color: '#6b7280' }}>Нет текущих задач с дедлайнами на ближайшую неделю.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {upcomingTasks.map(task => (
@@ -184,7 +192,6 @@ export default function ProfileAuth() {
     );
   }
 
-  // ЭКРАН Входа/Регистрации (если пользователь не вошел)
   return (
     <div style={{ maxWidth: '450px', margin: '40px auto' }} className="card">
       <h2>{isLogin ? 'Вход в систему' : 'Регистрация'}</h2>

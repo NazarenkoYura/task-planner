@@ -19,11 +19,9 @@ export default function Calendar() {
   
   const [currentDate, setCurrentDate] = useState(new Date());
   
-  // Состояния для выбранной ячейки дня
   const [selectedDateStr, setSelectedDateStr] = useState('');
   const [selectedDateTasks, setSelectedDateTasks] = useState([]);
 
-  // Состояния быстрого создания задачи внутри календаря
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
@@ -73,7 +71,6 @@ export default function Calendar() {
     }
   }, [token, location.state]);
 
-  // ОГРАНИЧЕНИЕ КАЛЕНДАРЯ 10 ГОДАМИ НАЗАД
   const handlePrevMonth = () => {
     const minDate = new Date();
     minDate.setFullYear(minDate.getFullYear() - 10);
@@ -84,7 +81,6 @@ export default function Calendar() {
     }
   };
 
-  // ОГРАНИЧЕНИЕ КАЛЕНДАРЯ 10 ГОДАМИ ВПЕРЕД
   const handleNextMonth = () => {
     const maxDate = new Date();
     maxDate.setFullYear(maxDate.getFullYear() + 10);
@@ -95,7 +91,6 @@ export default function Calendar() {
     }
   };
 
-  // Вычисление блокировок кнопок переключения месяцев
   const minLimitDate = new Date();
   minLimitDate.setFullYear(minLimitDate.getFullYear() - 10);
   const isPrevMonthBlocked = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1) < minLimitDate;
@@ -104,7 +99,6 @@ export default function Calendar() {
   maxLimitDate.setFullYear(maxLimitDate.getFullYear() + 10);
   const isNextMonthBlocked = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1) > maxLimitDate;
 
-  // Вычисление: находится ли выбранная дата в прошлом
   const todayStr = formatDateStr(new Date());
   const isSelectedDateInPast = selectedDateStr < todayStr;
 
@@ -221,12 +215,14 @@ export default function Calendar() {
 
   const dayCells = getDaysInMonth();
 
+  const activeTasks = selectedDateTasks.filter(t => t.status !== 'done');
+  const completedTasks = selectedDateTasks.filter(t => t.status === 'done');
+
   return (
     <div>
       {/* Шапка календаря */}
       <div className="card" style={{ margin: 0, marginBottom: '20px' }}>
         <div className="calendar-top-bar">
-          {/* Кнопка "Пред. месяц" блокируется, если достигнут предел в 10 лет назад */}
           <button 
             onClick={handlePrevMonth} 
             disabled={isPrevMonthBlocked}
@@ -277,7 +273,6 @@ export default function Calendar() {
                 <div className="calendar-badges">
                   {dayTasks.slice(0, 3).map(task => (
                     <div key={task.id} className={`task-badge-compact ${task.status}`}>
-                      {task.status === 'done' ? 'v ' : '* '}
                       {task.title.length > 10 ? `${task.title.slice(0, 8)}...` : task.title}
                     </div>
                   ))}
@@ -295,49 +290,7 @@ export default function Calendar() {
       {selectedDateStr && (
         <div style={{ display: 'flex', gap: '20px' }} className="flex-container">
           
-          {/* Левый блок: Список задач на день */}
-          <div className="card" style={{ flex: 2, margin: 0 }}>
-            <h3>Задачи на {new Date(selectedDateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}:</h3>
-            
-            {selectedDateTasks.length === 0 ? (
-              <p>На этот день задач не запланировано.</p>
-            ) : (
-              <div className="tasks-grid">
-                {selectedDateTasks.map(task => (
-                  <div key={task.id} className="card" style={{ margin: 0, borderLeft: '5px solid #3b82f6' }}>
-                    <Link to={`/task/${task.id}`} state={{ from: '/calendar', selectedDateStr: selectedDateStr }} style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <h4 style={{ margin: '0 0 10px 0' }}>{task.title}</h4>
-                      <p style={{ margin: '5px 0' }}>Статус: <strong>{task.status === 'todo' ? 'К выполнению' : task.status === 'in_progress' ? 'В процессе' : 'Готово'}</strong></p>
-                      <p style={{ fontSize: '13px', color: '#6b7280', margin: '5px 0' }}>Проект: {task.project_name || 'Без проекта'}</p>
-                      <div>
-                        {task.tags && task.tags.map(tag => (
-                          <span key={tag.id} className="tag-badge">#{tag.name}</span>
-                        ))}
-                      </div>
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Кнопка открытия формы добавления (блокируется, если выбранный день в прошлом) */}
-            {!isAddingTask && (
-              <button 
-                onClick={() => setIsAddingTask(true)} 
-                disabled={isSelectedDateInPast}
-                style={{ 
-                  backgroundColor: isSelectedDateInPast ? '#9ca3af' : '#10b981', 
-                  marginTop: '20px', 
-                  width: '100%',
-                  cursor: isSelectedDateInPast ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {isSelectedDateInPast ? 'Планирование на прошедшие дни заблокировано' : 'Добавить задачу на этот день'}
-              </button>
-            )}
-          </div>
-
-          {/* Правый блок: Форма добавления задачи (доступна только для настоящего/будущего времени) */}
+          {/* Левый блок: Форма добавления задачи (теперь первая в DOM) */}
           {isAddingTask && !isSelectedDateInPast && (
             <div className="card" style={{ flex: 1, margin: 0, height: 'fit-content' }}>
               <h3>Добавить задачу на {new Date(selectedDateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' })}</h3>
@@ -377,7 +330,7 @@ export default function Calendar() {
                             transition: 'background-color 0.2s, color 0.2s'
                           }}
                         >
-                          <span>{isSelected ? 'v ' : ''}#{t.name}</span>
+                          <span>{isSelected ? '[выбран] ' : ''}#{t.name}</span>
                           <button 
                             type="button"
                             onClick={(e) => handleDeleteTag(t.id, e)}
@@ -416,6 +369,74 @@ export default function Calendar() {
               </form>
             </div>
           )}
+
+          {/* Правый блок: Списки задач на день (теперь второй в DOM) */}
+          <div className="card" style={{ flex: 2, margin: 0 }}>
+            <h3>Задачи на {new Date(selectedDateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}:</h3>
+            
+            <h4>Активные задачи</h4>
+            {activeTasks.length === 0 ? (
+              <p>На этот день активных задач нет.</p>
+            ) : (
+              <div className="tasks-grid">
+                {activeTasks.map(task => (
+                  <div key={task.id} className="card" style={{ margin: 0, borderLeft: '5px solid #3b82f6' }}>
+                    <Link to={`/task/${task.id}`} state={{ from: '/calendar', selectedDateStr: selectedDateStr }} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <h4 style={{ margin: '0 0 10px 0' }}>{task.title}</h4>
+                      <p style={{ margin: '5px 0' }}>Статус: <strong>{task.status === 'todo' ? 'К выполнению' : task.status === 'in_progress' ? 'В процессе' : 'Готово'}</strong></p>
+                      <p style={{ fontSize: '13px', color: '#6b7280', margin: '5px 0' }}>Проект: {task.project_name || 'Без проекта'}</p>
+                      <div>
+                        {task.tags && task.tags.map(tag => (
+                          <span key={tag.id} className="tag-badge">#{tag.name}</span>
+                        ))}
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {completedTasks.length > 0 && (
+              <details style={{ marginTop: '25px' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 'bold', padding: '12px', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '6px', outline: 'none' }}>
+                  Выполненные задачи дня ({completedTasks.length})
+                </summary>
+                <div className="tasks-grid" style={{ marginTop: '15px' }}>
+                  {completedTasks.map(task => (
+                    <div key={task.id} className="card" style={{ margin: 0, borderLeft: '5px solid #10b981' }}>
+                      <Link to={`/task/${task.id}`} state={{ from: '/calendar', selectedDateStr: selectedDateStr }} style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <h4 style={{ margin: '0 0 10px 0', textDecoration: 'line-through', color: '#6b7280' }}>
+                          {task.title}
+                        </h4>
+                        <p style={{ margin: '5px 0' }}>Статус: <strong>Готово</strong></p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', margin: '5px 0' }}>Проект: {task.project_name || 'Без проекта'}</p>
+                        <div>
+                          {task.tags && task.tags.map(tag => (
+                            <span key={tag.id} className="tag-badge">#{tag.name}</span>
+                          ))}
+                        </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+
+            {!isAddingTask && (
+              <button 
+                onClick={() => setIsAddingTask(true)} 
+                disabled={isSelectedDateInPast}
+                style={{ 
+                  backgroundColor: isSelectedDateInPast ? '#9ca3af' : '#10b981', 
+                  marginTop: '25px', 
+                  width: '100%',
+                  cursor: isSelectedDateInPast ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isSelectedDateInPast ? 'Планирование на прошедшие дни заблокировано' : 'Добавить задачу на этот день'}
+              </button>
+            )}
+          </div>
 
         </div>
       )}

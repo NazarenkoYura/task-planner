@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 
 export default function Layout() {
-  // Инициализация темы из localStorage или по умолчанию 'light'
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
@@ -19,14 +18,15 @@ export default function Layout() {
         <div>
           <h2>Планировщик</h2>
           <nav>
+            {/* Эмодзи удалены из названий вкладок */}
             <Link to="/dashboard">Дашборд</Link>
             <Link to="/projects">Проекты</Link>
-            <Link to="/calendar">Календарь</Link> {/* Добавлено */}
+            <Link to="/calendar">Календарь</Link>
             <Link to="/profile">Профиль</Link>
           </nav>
         </div>
         
-        {/* Кнопка смены темы внизу боковой панели */}
+        {/* Эмодзи удалены из названия кнопки */}
         <button 
           onClick={toggleTheme} 
           style={{ 
@@ -36,7 +36,7 @@ export default function Layout() {
             marginTop: '20px'
           }}
         >
-          {theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
+          {theme === 'light' ? 'Темная тема' : 'Светлая тема'}
         </button>
       </aside>
       <main className="main-content">
