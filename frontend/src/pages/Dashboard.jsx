@@ -302,7 +302,7 @@ export default function Dashboard() {
                     </button>
                   )}
 
-                  <Link to={`/task/${task.id}`} state={{ from: '/' }} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <Link to={`/task/${task.id}`} state={{ from: '/dashboard' }} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <h4 style={{ margin: '0 0 10px 0', paddingRight: '140px' }}>{task.title}</h4>
                     <p style={{ margin: '5px 0' }}>Статус: <strong>{task.status === 'todo' ? 'К выполнению' : task.status === 'in_progress' ? 'В процессе' : 'Готово'}</strong></p>
                     {task.due_date && <p style={{ fontSize: '13px', color: '#dc2626', margin: '5px 0' }}>Срок: {task.due_date}</p>}

@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from .models import Project, Tag, Task
 from .serializers import UserSerializer, ProjectSerializer, TagSerializer, TaskSerializer
+from django.db.models import F
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -81,7 +82,9 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Task.objects.filter(assignee=self.request.user, is_deleted=False)
+        queryset = Task.objects.filter(
+            assignee=self.request.user, 
+            is_deleted=False).order_by(F('due_date').asc(nulls_last=True))
         
         project_id = self.request.query_params.get('project')
         if project_id:

@@ -1,12 +1,12 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom'; // Импорт Navigate добавлен
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import ProjectPage from './pages/ProjectPage';
 import TaskDetail from './pages/TaskDetail';
 import ProfileAuth from './pages/ProfileAuth';
-import './index.css';
 import Calendar from './pages/Calendar';
+import './index.css';
 
 // Компонент для отображения ошибки 404 (Страница не найдена)
 function NotFound() {
@@ -16,7 +16,8 @@ function NotFound() {
       <p style={{ color: '#6b7280', margin: '10px 0 20px 0' }}>
         Запрашиваемый адрес не существует, был удален или перенесен.
       </p>
-      <Link to="/">
+      {/* Путь изменен на /dashboard для соответствия кнопке */}
+      <Link to="/dashboard">
         <button style={{ width: '100%' }}>Вернуться на Дашборд</button>
       </Link>
     </div>
@@ -28,13 +29,15 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
+          {/* Автоматическое перенаправление с корня "/" на "/profile" по умолчанию */}
+          <Route index element={<Navigate to="/profile" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="projects" element={<ProjectPage />} />
-          <Route path="calendar" element={<Calendar />} />
           <Route path="task/:id" element={<TaskDetail />} />
           <Route path="profile" element={<ProfileAuth />} />
-          
-          {/* Ловим все несуществующие URL и показываем ошибку 404 внутри макета */}
+          <Route path="calendar" element={<Calendar />} />
+
+          {/* Регистрация роута-ловушки "*" для вывода кастомной 404-страницы */}
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

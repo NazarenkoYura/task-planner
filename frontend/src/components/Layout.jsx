@@ -19,7 +19,7 @@ export default function Layout() {
         <div>
           <h2>Планировщик</h2>
           <nav>
-            <Link to="/">Дашборд</Link>
+            <Link to="/dashboard">Дашборд</Link>
             <Link to="/projects">Проекты</Link>
             <Link to="/calendar">Календарь</Link> {/* Добавлено */}
             <Link to="/profile">Профиль</Link>

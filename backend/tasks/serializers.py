@@ -92,7 +92,7 @@ class TaskSerializer(serializers.ModelSerializer):
                 project=project,
                 title__iexact=title,
                 is_deleted=False
-            )
+            ).exclude(status='done')
             
             # При редактировании исключаем саму эту задачу из проверки на дубликаты
             if self.instance:

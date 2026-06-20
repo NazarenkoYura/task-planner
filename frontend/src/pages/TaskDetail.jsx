@@ -57,10 +57,11 @@ export default function TaskDetail() {
     if (location.state?.from === '/projects' && location.state?.project) {
       navigate('/projects', { state: { returnToProject: location.state.project } });
     } else if (location.state?.from === '/calendar' && location.state?.selectedDateStr) {
-      // Возвращаем на календарь и передаем выбранную дату для автооткрытия
       navigate('/calendar', { state: { returnToDate: location.state.selectedDateStr } });
+    } else if (location.state?.from === '/profile') {
+      navigate('/profile'); // Поддержка возврата в профиль
     } else {
-      navigate('/');
+      navigate('/dashboard'); // Изменено на /dashboard
     }
   };
 
